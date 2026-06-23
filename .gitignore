@@ -1,36 +1,58 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
-/node_modules
-/.pnp
+# ── Dependencies ──────────────────────────────────────
+node_modules/
+.pnp
 .pnp.js
 
-# testing
-/coverage
+# ── Frontend (Next.js) ───────────────────────────────
+frontend/.next/
+frontend/out/
+frontend/node_modules/
+next-env.d.ts
+*.tsbuildinfo
 
-# next.js
-/.next/
-/out/
+# ── Backend (Java / Maven) ───────────────────────────
+backend/target/
+backend/*.jar
+backend/.mvn/
 
-# production
-/build
+# ── Python / Inference ────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
 
-# misc
+# ── Model checkpoints (NEVER commit) ─────────────────
+*.pth
+*.pt
+*.bin
+*.onnx
+*.ckpt
+
+# ── Environment & secrets ────────────────────────────
+.env
+.env.*
+!.env.example
+!.env.local.example
+!backend/.env.example
+!frontend/.env.local.example
+
+# ── IDE & OS ─────────────────────────────────────────
 .DS_Store
-*.pem
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
 
-# debug
+# ── Misc ─────────────────────────────────────────────
+*.pem
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-
-# local env files
-.env*.local
-.env
-
-# vercel
+/coverage
+/build
 .vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+debug/
+stuff/
