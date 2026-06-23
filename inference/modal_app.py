@@ -49,7 +49,8 @@ volume = modal.Volume.from_name(VOLUME_NAME, create_if_missing=True)
 # Image: GPU-enabled torch + audio deps
 inference_image = (
     modal.Image.debian_slim(python_version="3.10")
-    .apt_install(["ffmpeg", "libsndfile1"])
+    .apt_install(["ffmpeg", "libsndfile1", "curl", "unzip"])
+    .run_commands("curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/usr/local sh")
     .pip_install([
         "torch==2.1.0",
         "torchaudio==2.1.0",
@@ -230,7 +231,14 @@ class DualSpoofDetector:
             )
 
             if proc.returncode != 0:
-                raise RuntimeError(f"yt-dlp error: {proc.stderr[:500]}")
+                stderr = proc.stderr[:500]
+                if "Sign in" in stderr or "bot" in stderr:
+                    raise RuntimeError(
+                        "YouTube đang chặn tải từ server cloud. "
+                        "Vui lòng dùng chức năng Upload file thay thế: "
+                        "tải video về máy, sau đó upload file audio."
+                    )
+                raise RuntimeError(f"yt-dlp error: {stderr}")
 
             wav_files = list(Path(tmpdir).glob("*.wav"))
             if wav_files:
