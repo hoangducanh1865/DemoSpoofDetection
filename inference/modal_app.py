@@ -296,11 +296,14 @@ class DualSpoofDetector:
         if not run_molex and not run_aasist:
             return {"error": "Must select at least 1 model"}
 
-        if "youtube_url" in payload:
+        youtube_url = payload.get("youtube_url")
+        audio_b64 = payload.get("audio_b64")
+
+        if youtube_url:
             return self._do_infer_youtube(
-                payload["youtube_url"], run_molex, run_aasist
+                youtube_url, run_molex, run_aasist
             )
-        elif "audio_b64" in payload:
+        elif audio_b64:
             return self._do_infer_file(
                 payload["audio_b64"],
                 payload.get("filename", "audio.wav"),
