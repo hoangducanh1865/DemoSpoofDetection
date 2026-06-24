@@ -1,7 +1,8 @@
 export type ModelId = 'molex' | 'aasist'
 
 export interface SegmentResult {
-  pct: number
+  start_sec: number
+  end_sec: number
   label: 'real' | 'spoof'
   confidence: number
 }

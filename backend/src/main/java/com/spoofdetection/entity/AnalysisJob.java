@@ -133,7 +133,8 @@ public class AnalysisJob {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class SegmentJson implements Serializable {
-        private Integer pct;
+        private Double startSec;
+        private Double endSec;
         private String label;
         private Double confidence;
     }

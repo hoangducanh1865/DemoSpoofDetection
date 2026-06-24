@@ -55,7 +55,8 @@ public class AnalysisJobDto {
                 .segments(json.getSegments() != null
                         ? json.getSegments().stream().map(s ->
                             SegmentDto.builder()
-                                    .pct(s.getPct())
+                                    .startSec(s.getStartSec())
+                                    .endSec(s.getEndSec())
                                     .label(s.getLabel())
                                     .confidence(s.getConfidence())
                                     .build()
@@ -86,7 +87,8 @@ public class AnalysisJobDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class SegmentDto {
-        private Integer pct;
+        private Double startSec;
+        private Double endSec;
         private String label;
         private Double confidence;
     }

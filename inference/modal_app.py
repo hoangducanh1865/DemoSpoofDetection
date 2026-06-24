@@ -215,17 +215,14 @@ class DualSpoofDetector:
             avg_spoof = sum(spoof_probs) / len(spoof_probs)
             final_label = "spoof" if avg_spoof > 0.5 else "real"
 
-            display_indices = []
-            for ratio in DISPLAY_RATIOS:
-                idx = min(int(ratio * n_segs), n_segs - 1)
-                display_indices.append(idx)
-
             segments_out = []
-            for idx in display_indices:
-                o = all_probs[idx]
-                pct = int((segments[idx][0] / max(waveform.shape[1], 1)) * 100)
+            for i, (start_sample, _seg) in enumerate(segments):
+                o = all_probs[i]
+                start_sec = round(start_sample / SAMPLE_RATE, 1)
+                end_sec = round((start_sample + SEGMENT_SAMPLES) / SAMPLE_RATE, 1)
                 segments_out.append({
-                    "pct":        pct,
+                    "start_sec":  start_sec,
+                    "end_sec":    end_sec,
                     "label":      o["label"],
                     "confidence": round(
                         o["spoof_prob"] if o["label"] == "spoof"

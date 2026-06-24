@@ -43,7 +43,10 @@ public class ModalResponse {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Segment {
-        private int pct;
+        @JsonProperty("start_sec")
+        private double startSec;
+        @JsonProperty("end_sec")
+        private double endSec;
         private String label;
         private double confidence;
     }

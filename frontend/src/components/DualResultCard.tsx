@@ -65,7 +65,7 @@ function ResultPanel({
       </div>
 
       {result.segments && result.segments.length > 0 && (
-        <SegmentTimeline segments={result.segments} />
+        <SegmentTimeline result={result} />
       )}
     </div>
   )

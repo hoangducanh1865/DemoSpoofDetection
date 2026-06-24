@@ -160,7 +160,8 @@ public class AnalysisService {
         if (mr.getSegments() != null) {
             segments = mr.getSegments().stream()
                     .map(s -> SegmentJson.builder()
-                            .pct(s.getPct())
+                            .startSec(s.getStartSec())
+                            .endSec(s.getEndSec())
                             .label(s.getLabel())
                             .confidence(s.getConfidence())
                             .build())
