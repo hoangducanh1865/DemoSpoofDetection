@@ -25,8 +25,8 @@ export default function SegmentTimeline({ result }: Props) {
 
       <div className="relative h-6 bg-gray-100 rounded-full overflow-hidden">
         {segments.map((seg, i) => {
-          const left = (seg.start_sec / Math.max(totalDurationSec, 0.1)) * 100
-          const width = ((seg.end_sec - seg.start_sec) / Math.max(totalDurationSec, 0.1)) * 100
+          const left = (seg.startSec / Math.max(totalDurationSec, 0.1)) * 100
+          const width = ((seg.endSec - seg.startSec) / Math.max(totalDurationSec, 0.1)) * 100
           return (
             <div
               key={i}
@@ -34,7 +34,7 @@ export default function SegmentTimeline({ result }: Props) {
                 seg.label === 'spoof' ? 'bg-red-300' : 'bg-green-300'
               }`}
               style={{ left: `${left}%`, width: `${Math.max(width, 0.5)}%` }}
-              title={`${formatTime(seg.start_sec)}–${formatTime(seg.end_sec)}: ${
+              title={`${formatTime(seg.startSec)}–${formatTime(seg.endSec)}: ${
                 seg.label === 'spoof' ? 'AI' : 'Thật'
               } (${(seg.confidence * 100).toFixed(0)}%)`}
             />
@@ -53,7 +53,7 @@ export default function SegmentTimeline({ result }: Props) {
             {segments.map((seg, i) => (
               <tr key={i} className="border-b border-gray-50">
                 <td className="py-0.5 text-gray-400 tabular-nums">
-                  {formatTime(seg.start_sec)}–{formatTime(seg.end_sec)}
+                  {formatTime(seg.startSec)}–{formatTime(seg.endSec)}
                 </td>
                 <td className={`py-0.5 font-medium ${
                   seg.label === 'spoof' ? 'text-red-500' : 'text-green-500'
