@@ -29,13 +29,11 @@ public class AnalysisService {
 
     private final AnalysisJobRepository jobRepository;
     private final ModalInferenceService modalInferenceService;
+    private final YouTubeDownloadService youtubeDownloadService;
 
     @Value("${app.default-models}")
     private String defaultModels;
 
-    /**
-     * Analyze audio from a YouTube URL.
-     */
     public AnalysisJobDto analyzeYouTube(String url, List<String> models) {
         List<String> resolvedModels = resolveModels(models);
 
@@ -50,8 +48,13 @@ public class AnalysisService {
             job.setStatus(JobStatus.PROCESSING);
             job = jobRepository.save(job);
 
+            byte[] audioBytes = youtubeDownloadService.downloadAudio(url);
+            String audioBase64 = Base64.getEncoder().encodeToString(audioBytes);
+            job.setFileSizeBytes((long) audioBytes.length);
+
             ModalRequest modalRequest = ModalRequest.builder()
-                    .youtubeUrl(url)
+                    .audioB64(audioBase64)
+                    .filename("youtube_audio.wav")
                     .models(resolvedModels)
                     .build();
 
