@@ -12,32 +12,59 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class YouTubeDownloadService {
 
+    private static final int MAX_RETRIES = 3;
+    private static final long RETRY_DELAY_MS = 3000;
+
     public byte[] downloadAudio(String youtubeUrl) throws IOException, InterruptedException {
         Path tmpDir = Files.createTempDirectory("yt-audio-");
         Path outputTemplate = tmpDir.resolve("audio.%(ext)s");
         Path wavFile = tmpDir.resolve("audio.wav");
 
         try {
-            ProcessBuilder pb = new ProcessBuilder(
-                    "yt-dlp", "-x", "--audio-format", "wav",
-                    "--audio-quality", "0", "--no-playlist",
-                    "--no-check-certificates",
-                    "--socket-timeout", "30",
-                    "-o", outputTemplate.toString(),
-                    youtubeUrl
-            );
-            pb.redirectErrorStream(true);
-            Process proc = pb.start();
-            String output = new String(proc.getInputStream().readAllBytes());
-            boolean finished = proc.waitFor(120, TimeUnit.SECONDS);
+            String output = null;
+            int exitCode = -1;
 
-            if (!finished) {
-                proc.destroyForcibly();
-                throw new IOException("yt-dlp timeout after 120s");
+            for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+                for (Path f : Files.list(tmpDir).filter(p -> !Files.isDirectory(p)).toArray(Path[]::new)) {
+                    Files.deleteIfExists(f);
+                }
+
+                ProcessBuilder pb = new ProcessBuilder(
+                        "yt-dlp", "-x", "--audio-format", "wav",
+                        "--audio-quality", "0", "--no-playlist",
+                        "--no-check-certificates",
+                        "--socket-timeout", "30",
+                        "-o", outputTemplate.toString(),
+                        youtubeUrl
+                );
+                pb.redirectErrorStream(true);
+                Process proc = pb.start();
+                output = new String(proc.getInputStream().readAllBytes());
+                boolean finished = proc.waitFor(120, TimeUnit.SECONDS);
+
+                if (!finished) {
+                    proc.destroyForcibly();
+                    if (attempt < MAX_RETRIES) {
+                        log.warn("yt-dlp timeout on attempt {}/{}, retrying...", attempt, MAX_RETRIES);
+                        Thread.sleep(RETRY_DELAY_MS);
+                        continue;
+                    }
+                    throw new IOException("yt-dlp timeout after 120s");
+                }
+
+                exitCode = proc.exitValue();
+                if (exitCode == 0) break;
+
+                if (attempt < MAX_RETRIES && (output.contains("403") || output.contains("429"))) {
+                    log.warn("yt-dlp got HTTP {}, retry {}/{}...",
+                            output.contains("403") ? "403" : "429", attempt, MAX_RETRIES);
+                    Thread.sleep(RETRY_DELAY_MS * attempt);
+                    continue;
+                }
             }
 
-            if (proc.exitValue() != 0) {
-                log.error("yt-dlp failed: {}", output);
+            if (exitCode != 0) {
+                log.error("yt-dlp failed after {} attempts: {}", MAX_RETRIES, output);
                 throw new IOException("YouTube download failed: " + output.substring(0, Math.min(output.length(), 800)));
             }
 
