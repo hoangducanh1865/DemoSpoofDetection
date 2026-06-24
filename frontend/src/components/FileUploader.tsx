@@ -41,7 +41,7 @@ export default function FileUploader({ models, onResult, onError, loading, setLo
 
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">File ghi âm</label>
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">File audio</label>
       <div
         className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 transition-colors"
         onClick={() => inputRef.current?.click()}
