@@ -17,13 +17,13 @@ export default function SegmentTimeline({ result }: Props) {
 
   return (
     <div className="mt-3">
-      <div className="text-xs text-gray-500 mb-1.5">
+      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1.5">
         Chi tiết {segments.length} đoạn ({formatTime(totalDurationSec)}):
         {spoofCount > 0 && <span className="text-red-500 ml-1">{spoofCount} AI</span>}
         {realCount > 0 && <span className="text-green-500 ml-1">{realCount} thật</span>}
       </div>
 
-      <div className="relative h-6 bg-gray-100 rounded-full overflow-hidden">
+      <div className="relative h-6 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
         {segments.map((seg, i) => {
           const left = (seg.startSec / Math.max(totalDurationSec, 0.1)) * 100
           const width = ((seg.endSec - seg.startSec) / Math.max(totalDurationSec, 0.1)) * 100
@@ -31,7 +31,7 @@ export default function SegmentTimeline({ result }: Props) {
             <div
               key={i}
               className={`absolute top-0 h-full ${
-                seg.label === 'spoof' ? 'bg-red-300' : 'bg-green-300'
+                seg.label === 'spoof' ? 'bg-red-300 dark:bg-red-700' : 'bg-green-300 dark:bg-green-700'
               }`}
               style={{ left: `${left}%`, width: `${Math.max(width, 0.5)}%` }}
               title={`${formatTime(seg.startSec)}–${formatTime(seg.endSec)}: ${
@@ -42,7 +42,7 @@ export default function SegmentTimeline({ result }: Props) {
         })}
       </div>
 
-      <div className="flex justify-between mt-0.5 text-[10px] text-gray-400">
+      <div className="flex justify-between mt-0.5 text-[10px] text-gray-400 dark:text-gray-500">
         <span>0s</span>
         <span>{formatTime(totalDurationSec)}</span>
       </div>
@@ -51,8 +51,8 @@ export default function SegmentTimeline({ result }: Props) {
         <table className="w-full text-xs">
           <tbody>
             {segments.map((seg, i) => (
-              <tr key={i} className="border-b border-gray-50">
-                <td className="py-0.5 text-gray-400 tabular-nums">
+              <tr key={i} className="border-b border-gray-50 dark:border-gray-700">
+                <td className="py-0.5 text-gray-400 dark:text-gray-500 tabular-nums">
                   {formatTime(seg.startSec)}–{formatTime(seg.endSec)}
                 </td>
                 <td className={`py-0.5 font-medium ${

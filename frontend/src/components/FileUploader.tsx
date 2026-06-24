@@ -41,9 +41,9 @@ export default function FileUploader({ models, onResult, onError, loading, setLo
 
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">File ghi âm</label>
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">File ghi âm</label>
       <div
-        className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-400 transition-colors"
+        className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 transition-colors"
         onClick={() => inputRef.current?.click()}
         onDragOver={e => { e.preventDefault(); e.stopPropagation() }}
         onDrop={e => {
@@ -60,12 +60,12 @@ export default function FileUploader({ models, onResult, onError, loading, setLo
           onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f) }}
         />
         {file ? (
-          <div className="text-sm text-gray-700">
+          <div className="text-sm text-gray-700 dark:text-gray-200">
             <span className="font-medium">{file.name}</span>
-            <span className="text-gray-400 ml-2">({(file.size / 1024 / 1024).toFixed(1)} MB)</span>
+            <span className="text-gray-400 dark:text-gray-500 ml-2">({(file.size / 1024 / 1024).toFixed(1)} MB)</span>
           </div>
         ) : (
-          <div className="text-sm text-gray-400">
+          <div className="text-sm text-gray-400 dark:text-gray-500">
             Kéo thả file hoặc click để chọn
             <div className="text-xs mt-1">MP3, WAV, OGG, M4A, MP4, FLAC (tối đa 50MB)</div>
           </div>
