@@ -38,7 +38,7 @@ public class YouTubeDownloadService {
 
             if (proc.exitValue() != 0) {
                 log.error("yt-dlp failed: {}", output);
-                throw new IOException("YouTube download failed: " + output.substring(0, Math.min(output.length(), 300)));
+                throw new IOException("YouTube download failed: " + output.substring(0, Math.min(output.length(), 800)));
             }
 
             if (!Files.exists(wavFile)) {
