@@ -123,6 +123,7 @@ public class AnalysisJob {
         private Double confidence;
         private Double spoofProbability;
         private List<SegmentJson> segments;
+        private Integer segmentsAnalyzed;
         private Double totalDurationSec;
         private Integer processingMs;
     }

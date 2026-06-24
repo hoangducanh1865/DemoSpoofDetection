@@ -54,11 +54,14 @@ function ResultPanel({
             {(result.confidence * 100).toFixed(1)}%
           </span>
         </div>
-        {result.processingMs !== undefined && (
-          <div className="text-xs text-gray-400">
-            Xử lý: {(result.processingMs / 1000).toFixed(1)}s
-          </div>
-        )}
+        <div className="text-xs text-gray-400">
+          {result.segmentsAnalyzed !== undefined && (
+            <span>{result.segmentsAnalyzed} đoạn · </span>
+          )}
+          {result.processingMs !== undefined && (
+            <span>Xử lý: {(result.processingMs / 1000).toFixed(1)}s</span>
+          )}
+        </div>
       </div>
 
       {result.segments && result.segments.length > 0 && (

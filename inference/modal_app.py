@@ -21,8 +21,14 @@ MOLEX_CKPT      = "/vol/models/molex/averaged_checkpoint.pth"
 AASIST_CKPT     = "/vol/models/aasist/aasist_asvspoof5.pth"
 WAVLM_CKPT      = "/vol/models/wavlm/pytorch_model.bin"
 SAMPLE_RATE     = 16000
-SEGMENT_SAMPLES = 64600
-SAMPLE_RATIOS   = [0.10, 0.50, 0.90]
+SEGMENT_SAMPLES = 64600       # ~4s per segment, matches baseline eval
+MAX_SEGMENTS    = 100         # ~30s MoLEx + ~10s AASIST ≈ 40s total
+DISPLAY_RATIOS  = [0.10, 0.50, 0.90]
+
+# EER-optimal thresholds on bonafide logit (output[:, 1])
+# Derived from eval on ASVspoof5: score > threshold → bonafide, else spoof
+MOLEX_THRESHOLD  = 2.56
+AASIST_THRESHOLD = 0.0   # AASIST uses softmax, threshold ~0 works well
 
 MOLEX_CONFIG = {
     "SSL_dim": 1024, "SSL_layer_num": 12,
@@ -54,7 +60,7 @@ inference_image = (
     .pip_install([
         "torch==2.1.0",
         "torchaudio==2.1.0",
-        "yt-dlp>=2024.1.0",
+        "yt-dlp>=2025.1.0",
         "numpy>=1.24.0,<2",
         "scipy>=1.10.0",
         "fastapi>=0.104.0",
@@ -117,35 +123,23 @@ class DualSpoofDetector:
             waveform = waveform.mean(dim=0, keepdim=True)
         return waveform.to(self.device)  # [1, T]
 
-    def _extract_segment(self, waveform: torch.Tensor, ratio: float) -> torch.Tensor:
-        """Extract a SEGMENT_SAMPLES chunk at position ratio (0..1) in waveform."""
-        T = waveform.shape[1]
-        center = int(T * ratio)
-        start  = max(0, center - SEGMENT_SAMPLES // 2)
-        end    = start + SEGMENT_SAMPLES
-        if end > T:
-            start = max(0, T - SEGMENT_SAMPLES)
-            end   = T
-        seg = waveform[:, start:end]
-        if seg.shape[1] < SEGMENT_SAMPLES:
-            seg = torch.nn.functional.pad(seg, (0, SEGMENT_SAMPLES - seg.shape[1]))
-        return seg  # [1, SEGMENT_SAMPLES]
-
     # ── Single model inference ────────────────────────────────────
 
     def _run_molex(self, segment: torch.Tensor) -> dict:
         """
         Run MoLEx on a single segment.
-        Output: {label: 'real'|'spoof', spoof_prob: float}
-        Index 0 = spoof, Index 1 = bonafide
+        Uses bonafide logit (index 1) with EER-calibrated threshold.
+        Spoof probability is sigmoid of distance from threshold for
+        consistent display (0.5 at threshold, >0.5 means spoof).
         """
         with torch.no_grad():
             out = self.molex(segment)  # [1, 2] logits
-            probs = torch.softmax(out, dim=-1)
-            # Index 0 = spoof, Index 1 = bonafide
-            spoof_prob = probs[0, 0].item()
+            bonafide_logit = out[0, 1].item()
+            is_spoof = bonafide_logit < MOLEX_THRESHOLD
+            distance = MOLEX_THRESHOLD - bonafide_logit
+            spoof_prob = 1.0 / (1.0 + torch.exp(torch.tensor(-distance)).item())
         return {
-            "label": "spoof" if spoof_prob > 0.5 else "real",
+            "label": "spoof" if is_spoof else "real",
             "spoof_prob": round(spoof_prob, 4),
         }
 
@@ -166,12 +160,38 @@ class DualSpoofDetector:
 
     # ── Multi-segment pipeline ────────────────────────────────────
 
+    def _build_segments(self, waveform: torch.Tensor):
+        """
+        Evenly-spaced segments across full audio.
+        - Short audio (≤ MAX_SEGMENTS × 4s): non-overlapping, covers 100%
+        - Long audio: MAX_SEGMENTS segments evenly distributed
+        """
+        T = waveform.shape[1]
+        total_possible = T // SEGMENT_SAMPLES
+
+        if total_possible <= 1:
+            seg = waveform[:, :SEGMENT_SAMPLES]
+            if seg.shape[1] < SEGMENT_SAMPLES:
+                seg = torch.nn.functional.pad(seg, (0, SEGMENT_SAMPLES - seg.shape[1]))
+            return [(0, seg)]
+
+        n_segs = min(total_possible, MAX_SEGMENTS)
+        hop = (T - SEGMENT_SAMPLES) / max(n_segs - 1, 1)
+
+        segments = []
+        for i in range(n_segs):
+            start = int(i * hop)
+            seg = waveform[:, start:start + SEGMENT_SAMPLES]
+            segments.append((start, seg))
+        return segments
+
     def _analyze_waveform(
         self, waveform: torch.Tensor, run_molex: bool, run_aasist: bool
     ) -> dict:
-        """Extract segments, run model(s), return combined results."""
+        """Sliding window inference over full audio, display 3 representative points."""
         total_secs = waveform.shape[1] / SAMPLE_RATE
-        ratios = SAMPLE_RATIOS if total_secs > 10 else [0.50]
+        segments = self._build_segments(waveform)
+        n_segs = len(segments)
 
         result = {}
 
@@ -183,26 +203,36 @@ class DualSpoofDetector:
                 continue
 
             model_start = time.time()
-            segments_out = []
-            spoof_probs  = []
+            all_probs = []
 
-            for ratio in ratios:
-                seg = self._extract_segment(waveform, ratio)
+            for _start, seg in segments:
                 out = run_fn(seg)
-                spoof_probs.append(out["spoof_prob"])
-                segments_out.append({
-                    "pct":        int(ratio * 100),
-                    "label":      out["label"],
-                    "confidence": round(
-                        out["spoof_prob"] if out["label"] == "spoof"
-                        else 1 - out["spoof_prob"], 4
-                    ),
-                })
+                all_probs.append(out)
 
             model_ms = int((time.time() - model_start) * 1000)
 
+            spoof_probs = [o["spoof_prob"] for o in all_probs]
             avg_spoof = sum(spoof_probs) / len(spoof_probs)
             final_label = "spoof" if avg_spoof > 0.5 else "real"
+
+            display_indices = []
+            for ratio in DISPLAY_RATIOS:
+                idx = min(int(ratio * n_segs), n_segs - 1)
+                display_indices.append(idx)
+
+            segments_out = []
+            for idx in display_indices:
+                o = all_probs[idx]
+                pct = int((segments[idx][0] / max(waveform.shape[1], 1)) * 100)
+                segments_out.append({
+                    "pct":        pct,
+                    "label":      o["label"],
+                    "confidence": round(
+                        o["spoof_prob"] if o["label"] == "spoof"
+                        else 1 - o["spoof_prob"], 4
+                    ),
+                })
+
             result[model_name] = {
                 "label":             final_label,
                 "confidence":        round(
@@ -210,6 +240,7 @@ class DualSpoofDetector:
                 ),
                 "spoof_probability": round(avg_spoof, 4),
                 "segments":          segments_out,
+                "segments_analyzed": n_segs,
                 "total_duration_sec": round(total_secs, 1),
                 "processing_ms":     model_ms,
             }
@@ -221,18 +252,26 @@ class DualSpoofDetector:
     def _do_infer_youtube(self, youtube_url, run_molex, run_aasist):
         with tempfile.TemporaryDirectory() as tmpdir:
             out_tpl = os.path.join(tmpdir, "audio.%(ext)s")
+
+            yt_dlp_cmd = [
+                "yt-dlp", "-x", "--audio-format", "wav",
+                "--audio-quality", "0", "--no-playlist",
+                "--extractor-args", "youtube:player_client=ios,mweb",
+                "--user-agent", "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) "
+                    "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+                "--no-check-certificates",
+                "--socket-timeout", "30",
+                "-o", out_tpl, youtube_url,
+            ]
+
             proc = subprocess.run(
-                [
-                    "yt-dlp", "-x", "--audio-format", "wav",
-                    "--audio-quality", "0", "--no-playlist",
-                    "-o", out_tpl, youtube_url,
-                ],
-                capture_output=True, text=True, timeout=120,
+                yt_dlp_cmd,
+                capture_output=True, text=True, timeout=180,
             )
 
             if proc.returncode != 0:
                 stderr = proc.stderr[:500]
-                if "Sign in" in stderr or "bot" in stderr:
+                if "Sign in" in stderr or "bot" in stderr or "confirm" in stderr:
                     raise RuntimeError(
                         "YouTube đang chặn tải từ server cloud. "
                         "Vui lòng dùng chức năng Upload file thay thế: "

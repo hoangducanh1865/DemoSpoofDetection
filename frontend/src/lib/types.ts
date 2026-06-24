@@ -11,6 +11,7 @@ export interface SingleModelResult {
   confidence: number
   spoofProbability: number
   segments: SegmentResult[]
+  segmentsAnalyzed?: number
   totalDurationSec: number
   processingMs?: number
 }

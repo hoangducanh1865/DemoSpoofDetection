@@ -29,6 +29,9 @@ public class ModalResponse {
 
         private List<Segment> segments;
 
+        @JsonProperty("segments_analyzed")
+        private int segmentsAnalyzed;
+
         @JsonProperty("total_duration_sec")
         private double totalDurationSec;
 

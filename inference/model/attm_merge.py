@@ -6,7 +6,7 @@ Source: https://github.com/pandarialTJU/AttM_INTERSPEECH24.git
 Author: Zihan Pan
 '''
 
-import math, torch, torchaudio
+import math, torch
 import torch.nn as nn
 import torch.nn.functional as F
 

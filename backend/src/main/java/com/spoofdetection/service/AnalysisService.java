@@ -172,6 +172,7 @@ public class AnalysisService {
                 .confidence(mr.getConfidence())
                 .spoofProbability(mr.getSpoofProbability())
                 .segments(segments)
+                .segmentsAnalyzed(mr.getSegmentsAnalyzed())
                 .totalDurationSec(mr.getTotalDurationSec())
                 .processingMs(mr.getProcessingMs())
                 .build();

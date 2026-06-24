@@ -61,6 +61,7 @@ public class AnalysisJobDto {
                                     .build()
                         ).toList()
                         : null)
+                .segmentsAnalyzed(json.getSegmentsAnalyzed())
                 .totalDurationSec(json.getTotalDurationSec())
                 .processingMs(json.getProcessingMs())
                 .build();
@@ -75,6 +76,7 @@ public class AnalysisJobDto {
         private Double confidence;
         private Double spoofProbability;
         private List<SegmentDto> segments;
+        private Integer segmentsAnalyzed;
         private Double totalDurationSec;
         private Integer processingMs;
     }
