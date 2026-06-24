@@ -4,7 +4,9 @@ import UrlAnalyzer from '@/components/UrlAnalyzer'
 import FileUploader from '@/components/FileUploader'
 import ModelSelector from '@/components/ModelSelector'
 import DualResultCard from '@/components/DualResultCard'
+import SampleFiles from '@/components/SampleFiles'
 import ThemeToggle from '@/components/ThemeToggle'
+import { analyzeFile } from '@/lib/api'
 import type { AnalysisJob, ModelId } from '@/lib/types'
 
 type Tab = 'youtube' | 'upload'
@@ -15,6 +17,21 @@ export default function HomePage() {
   const [result, setResult]   = useState<AnalysisJob | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError]     = useState<string | null>(null)
+
+  const handleSampleFile = async (file: File) => {
+    setTab('upload')
+    setLoading(true)
+    setError(null)
+    setResult(null)
+    try {
+      const job = await analyzeFile(file, 'file_upload', models)
+      setResult(job)
+    } catch (err: any) {
+      setError(err.response?.data?.message ?? err.message ?? 'Lỗi không xác định')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-950 dark:to-gray-900 py-12 px-4 transition-colors">
@@ -43,6 +60,7 @@ export default function HomePage() {
             : <FileUploader models={models} onResult={setResult}
                 onError={msg => setError(msg || null)} loading={loading} setLoading={setLoading} />
           }
+          <SampleFiles models={models} onFileSelected={handleSampleFile} />
         </div>
 
         {loading && (
