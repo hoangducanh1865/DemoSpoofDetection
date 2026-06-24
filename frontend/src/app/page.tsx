@@ -21,10 +21,7 @@ export default function HomePage() {
       <ThemeToggle />
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-1">Phát hiện giọng AI</h1>
-          <p className="text-gray-500 dark:text-gray-400 text-sm">
-            Demo model <span className="font-semibold text-blue-600 dark:text-blue-400">MoLEx</span> — ASVspoof5
-          </p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-1">Speech Deepfake Detector</h1>
         </div>
 
         <div className="flex gap-2 mb-4 bg-white dark:bg-gray-800 rounded-xl p-1 shadow-sm border dark:border-gray-700">
@@ -50,7 +47,7 @@ export default function HomePage() {
 
         {loading && (
           <div className="text-center text-sm text-gray-500 dark:text-gray-400 mb-4">
-            Đang phân tích... (MoLEx cold start có thể mất 40-60 giây lần đầu)
+            Đang phân tích... (Cold start có thể mất 40-60 giây lần đầu)
           </div>
         )}
 

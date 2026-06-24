@@ -86,7 +86,7 @@ export default function DualResultCard({ job }: Props) {
       </div>
 
       <div className={`flex gap-4 ${hasBoth ? '' : 'justify-center'}`}>
-        <ResultPanel title="MoLEx" result={job.resultMolex} primary />
+        <ResultPanel title="SEE-MoLEx" result={job.resultMolex} primary />
         <ResultPanel title="AASIST" result={job.resultAasist} />
       </div>
 

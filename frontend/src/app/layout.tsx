@@ -5,8 +5,8 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Phát hiện giọng AI',
-  description: 'Demo model MoLEx — ASVspoof5',
+  title: 'Speech Deepfake Detector',
+  description: 'SEE-MoLEx & AASIST — Speech Deepfake Detection',
 }
 
 export default function RootLayout({

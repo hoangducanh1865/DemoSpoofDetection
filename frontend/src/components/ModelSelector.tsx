@@ -1,8 +1,8 @@
 import type { ModelId } from '@/lib/types'
 
 const MODEL_INFO: Record<ModelId, { label: string; desc: string }> = {
-  molex:  { label: 'MoLEx',  desc: 'Model mới phát triển (ASVspoof5)' },
-  aasist: { label: 'AASIST', desc: 'Baseline nổi tiếng (ASVspoof5)' },
+  molex:  { label: 'SEE-MoLEx',  desc: 'Train on ASVspoof5' },
+  aasist: { label: 'AASIST', desc: 'Train on ASVspoof5' },
 }
 
 interface Props {
