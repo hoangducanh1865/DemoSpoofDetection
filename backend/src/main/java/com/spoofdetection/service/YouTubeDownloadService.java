@@ -18,7 +18,6 @@ public class YouTubeDownloadService {
     public byte[] downloadAudio(String youtubeUrl) throws IOException, InterruptedException {
         Path tmpDir = Files.createTempDirectory("yt-audio-");
         Path outputTemplate = tmpDir.resolve("audio.%(ext)s");
-        Path wavFile = tmpDir.resolve("audio.wav");
 
         try {
             String output = null;
@@ -30,8 +29,8 @@ public class YouTubeDownloadService {
                 }
 
                 ProcessBuilder pb = new ProcessBuilder(
-                        "yt-dlp", "-x", "--audio-format", "wav",
-                        "--audio-quality", "0", "--no-playlist",
+                        "yt-dlp", "-x", "--audio-format", "opus",
+                        "--audio-quality", "5", "--no-playlist",
                         "--no-check-certificates",
                         "--socket-timeout", "30",
                         "-o", outputTemplate.toString(),
@@ -68,23 +67,11 @@ public class YouTubeDownloadService {
                 throw new IOException("YouTube download failed: " + output.substring(0, Math.min(output.length(), 800)));
             }
 
-            if (!Files.exists(wavFile)) {
-                Path[] files = Files.list(tmpDir).filter(p -> !Files.isDirectory(p)).toArray(Path[]::new);
-                if (files.length == 0) {
-                    throw new IOException("No audio file downloaded");
-                }
-                Path src = files[0];
-                ProcessBuilder ffmpeg = new ProcessBuilder(
-                        "ffmpeg", "-i", src.toString(),
-                        "-ar", "16000", "-ac", "1", wavFile.toString()
-                );
-                ffmpeg.redirectErrorStream(true);
-                Process ffProc = ffmpeg.start();
-                ffProc.getInputStream().readAllBytes();
-                ffProc.waitFor(60, TimeUnit.SECONDS);
+            Path[] files = Files.list(tmpDir).filter(p -> !Files.isDirectory(p)).toArray(Path[]::new);
+            if (files.length == 0) {
+                throw new IOException("No audio file downloaded");
             }
-
-            return Files.readAllBytes(wavFile);
+            return Files.readAllBytes(files[0]);
         } finally {
             Files.walk(tmpDir)
                     .sorted(java.util.Comparator.reverseOrder())

@@ -54,7 +54,7 @@ public class AnalysisService {
 
             ModalRequest modalRequest = ModalRequest.builder()
                     .audioB64(audioBase64)
-                    .filename("youtube_audio.wav")
+                    .filename("youtube_audio.opus")
                     .models(resolvedModels)
                     .build();
 
